@@ -2,9 +2,9 @@
 
 EXTENDS Naturals, FiniteSets, TLC
 
-VARIABLES loc1, loc2, locOther, msgs, phase, crash, pclean, decisionRound, receivers, someP
+VARIABLES loc1, locOther, msgs, phase, crash, pclean, decisionRound, receivers, someP
 
-vars == <<loc1, loc2, locOther, msgs, phase, crash, pclean, decisionRound, receivers, someP>>
+vars == <<loc1, locOther, msgs, phase, crash, pclean, decisionRound, receivers, someP>>
 
 unknown == 2 \* unknown decision value
 V == {0, 1} \* set of values
@@ -90,7 +90,7 @@ MsgsEnvironment ==
 TransEnvironment ==
     /\ phase' =  "msgs"
     /\ crash' \in [{l \in locOther' : ~l.halt} -> ((SUBSET(BOOLEAN)) \ {{}})]
-    /\ receivers' \in [{l \in DOMAIN crash' : TRUE \in crash[l]'} \X {u \in TLCEval(Correct') : min(u)' = 1} -> ((SUBSET(BOOLEAN)) \ {{}})] \* /\ (l.W # loc1'.W \/ l.W # loc2'.W) \/ \E l1 \in locOther' : l.W # l1.W
+    /\ receivers' \in [{l \in DOMAIN crash' : TRUE \in crash[l]'} \X {u \in TLCEval(Correct') : min(u)' = 1} -> ((SUBSET(BOOLEAN)) \ {{}})] 
     /\ someP' = [l \in {l \in locOther : ~l.halt /\ crash[l] # {TRUE} /\ l.min = 1}' |-> FALSE]  
     /\ UNCHANGED <<decisionRound, pclean>>
     
@@ -207,5 +207,5 @@ Termination == <>(loc1.halt)
 
 =============================================================================
 \* Modification History
-\* Last modified Tue May 19 16:15:52 CEST 2020 by ilina
+\* Last modified Tue May 19 16:42:48 CEST 2020 by ilina
 \* Created Tue May 19 16:00:14 CEST 2020 by ilina
