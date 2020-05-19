@@ -1,4 +1,4 @@
------------------------------- MODULE floodmin ------------------------------
+------------------------------ MODULE floodmin_k2 ------------------------------
 
 EXTENDS Naturals, FiniteSets, TLC
 
@@ -116,5 +116,6 @@ Termination == <>(\A p \in P : p \in failed \/ state[p].decision # unknown)
 
 =============================================================================
 \* Modification History
+\* Last modified Tue May 19 16:27:42 CEST 2020 by ilina
 \* Last modified Thu Sep 28 18:11:32 CEST 2017 by stoilkov
 \* Created Thu Sep 28 18:06:12 CEST 2017 by stoilkov

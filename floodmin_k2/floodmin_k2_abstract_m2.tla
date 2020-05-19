@@ -1,17 +1,18 @@
---------------------- MODULE floodmin_abstract_m1 ---------------------
+--------------------- MODULE floodmin_k2_abstract_m2 ---------------------
 
 EXTENDS Naturals, FiniteSets, TLC
 
-VARIABLES loc1, locOther, msgs, phase, crash, decisionRound, receivers, someP, pclean
+VARIABLES loc1, loc2, locOther, msgs, phase, crash, decisionRound, receivers, someP, pclean
 
-vars == <<loc1, locOther, msgs, phase, crash, decisionRound, receivers, someP, pclean>>
+vars == <<loc1, loc2, locOther, msgs, phase, crash, decisionRound, receivers, someP, pclean>>
 
 unknown == 3 \* unknown decision value
 V == {0, 1, 2} \* set of values
 K == 2 \* cardinality of set of decision values
 I == 1 .. 6 \* indices corresponding to process locations
-U == 1 .. 7 \* array indices (process locations + 1 fixed process) 
+U == 1 .. 8 \* array indices (process locations + 2 fixed processes)
 u1 == 7 \* index for process 1
+u2 == 8 \* index for process 2
 Loc == [min : V, halt : BOOLEAN]
 AM == {W \in SUBSET(V \cup {unknown}) : W = {} \/ Cardinality(W) = 1 \/ (Cardinality(W) = 2 /\ unknown \in W)} \* abstract message alphabet  
 
@@ -28,18 +29,20 @@ index(l) ==
     LET m == IF l.min = 0 THEN 0 ELSE IF l.min = 1 THEN 1 ELSE 2 IN
     2 * m + h + 1
 
-\* get minimum value, given index u \in U 
+\* get minimum value, given index u \in U  
 min(u) ==
     IF u = u1
     THEN loc1.min
-    ELSE location(u).min    
+    ELSE IF u = u2
+         THEN loc2.min
+         ELSE location(u).min    
     
 \* Set of indices witnessing non-failed processes  
-IndexNonFailed == {u1} \cup {index(l) : l \in {l1 \in locOther : ~l1.halt}}
+IndexNonFailed == {u1, u2} \cup {index(l) : l \in {l1 \in locOther : ~l1.halt}}
 \* Set of locations of active processes
-Active == {loc1} \cup locOther 
+Active == {loc1, loc2} \cup locOther 
 \* Set of indices of correct processes (i.e., non-failed and non-crashed) 
-Correct == {u1} \cup {index(l) : l \in {l1 \in locOther : ~l1.halt /\ crash[l1] # {TRUE}}}
+Correct == {u1, u2} \cup {index(l) : l \in {l1 \in locOther : ~l1.halt /\ crash[l1] # {TRUE}}}
 
 \* set failure flag of l to TRUE  
 failedLocation(l) ==
@@ -53,6 +56,7 @@ InitActive == {[min |-> 0, halt |-> FALSE],
 \* type invariant               
 TypeOK ==
     /\ loc1 \in Loc
+    /\ loc2 \in Loc
     /\ locOther \in SUBSET(Loc)
     /\ msgs \in [IndexNonFailed -> [IndexNonFailed -> AM]]
     /\ phase \in {"msgs", "trans"}
@@ -61,6 +65,7 @@ TypeOK ==
     /\ decisionRound \in BOOLEAN    
     /\ receivers \in [{l \in DOMAIN crash : TRUE \in crash[l]} \X {u \in Correct : min(u) = 2} -> SUBSET(BOOLEAN)]
     /\ someP \in [{l \in locOther : ~l.halt /\ crash[l] # {TRUE} /\ l.min = 2} -> BOOLEAN]
+               
 
 \* initial predicate of the environment   
 InitEnvironment == 
@@ -74,9 +79,10 @@ InitEnvironment ==
 \* initial predicate of the algorithm  
 InitAlgorithm ==
     /\ loc1 \in InitActive \* first fixed process 
+    /\ loc2 \in InitActive \* second fixed process 
     /\ locOther \in ((SUBSET(InitActive)) \ {{}}) \* set of locations witnessing the other N - 2 processes
     /\ msgs = [u \in IndexNonFailed |-> [v \in IndexNonFailed |-> {unknown}]] \* two-dimensional messages array
-
+    
 \* environment transition in the message exchage phase 
 MsgsEnvironment == 
     /\ phase' =  "trans" 
@@ -121,41 +127,41 @@ UpdateOther(l, m) ==
              THEN TRUE
              ELSE FALSE IN
     [min |-> m, halt |-> h]    
- 
-\* update of a process location witnessing correct processes      
+  
+\* update of a process location witnessing correct processes    
 UpdateCorrect(l, u) ==
-    IF l.min = 2 /\ loc1.min = l.min
-    THEN IF \A v \in IndexNonFailed : v \notin {u1} /\ min(v) # l.min => crash[location(v)] = {TRUE} /\ receivers[location(v), u] = {FALSE}
-         THEN {TLCEval(UpdateOther(l, l.min))}
+    IF l.min = 2 /\ loc1.min = l.min /\ loc2.min = l.min
+    THEN IF \A v \in IndexNonFailed : v \notin {u1, u2} /\ min(v) # l.min => crash[location(v)] = {TRUE} /\ receivers[location(v), u] = {FALSE}
+         THEN {UpdateOther(l, l.min)}
          ELSE IF someP[l]
-              THEN {TLCEval(Update(l, u)), TLCEval(UpdateOther(l, l.min))}
-              ELSE {TLCEval(Update(l, u))} 
-    ELSE {TLCEval(Update(l, u))}  
+              THEN {Update(l, u), UpdateOther(l, l.min)}
+              ELSE {Update(l, u)} 
+    ELSE {Update(l, u)}  
  
 \* delivery of messages by the environment   
 EnvSemMsg(m, u, v) ==
-    IF u \in {u1}   
+    IF u \in {u1, u2}   
     THEN {m}
     ELSE LET l == location(u) IN
          IF crash[l] = {TRUE, FALSE}
-         THEN IF min(v) = 2 /\ (v \in {u1} \/ crash[location(v)] # {TRUE})  
+         THEN IF min(v) = 2 /\ (v \in {u1, u2} \/ crash[location(v)] # {TRUE})  
               THEN IF receivers[l,v] = {TRUE}
                    THEN {m}
                    ELSE {unknown, m}
               ELSE {unknown}                   
          ELSE IF crash[l] = {TRUE} 
-              THEN IF min(v) = 2 /\ (v \in {u1} \/ crash[location(v)] # {TRUE})
+              THEN IF min(v) = 2 /\ (v \in {u1, u2} \/ crash[location(v)] # {TRUE})
                    THEN IF receivers[l,v] = {TRUE}
                         THEN {m}
                         ELSE IF receivers[l,v] = {FALSE}
                              THEN {unknown}
                              ELSE {unknown, m}
                    ELSE {unknown}          
-              ELSE IF min(v) = 2 /\ (v \in {u1} \/ crash[location(v)] # {TRUE})
+              ELSE IF min(v) = 2 /\ (v \in {u1, u2} \/ crash[location(v)] # {TRUE})
                    THEN {m}
                    ELSE {unknown} 
 
-\* state update of the fixed processes w.r.t. the environment  
+\* state update of the fixed processes w.r.t. the environment   
 EnvSemState(l, u) ==
     IF l.halt
     THEN l
@@ -168,17 +174,18 @@ EnvSemStateOther(l) ==
     ELSE IF crash[l] = {TRUE}
          THEN {failedLocation(l)}  \* all processes witnessed by l crashed 
          ELSE IF crash[l] = {TRUE, FALSE} \* some processes witnessed by l crashed, and some not
-              THEN  UpdateCorrect(l, index(l)) \cup {failedLocation(l)}  
+              THEN  UpdateCorrect(l, index(l)) \cup {failedLocation(l)} \* partially correct 
               ELSE  UpdateCorrect(l, index(l)) \* no processes witnessed by l crashed
-  
-\* algorithm transition in the message exchange phase       
+
+\* algorithm transition in the message exchange phase         
 MsgsAlgorithm == 
     /\ msgs' = [u \in IndexNonFailed |-> [v \in IndexNonFailed |-> EnvSemMsg(SendMessage(u, v), u, v)]]
-    /\ UNCHANGED <<loc1, locOther>>
+    /\ UNCHANGED <<loc1, loc2, locOther>>
 
 \* algorithm transition in the state update phase    
 TransAlgorithm ==
     /\ loc1' = EnvSemState(loc1, u1)
+    /\ loc2' = EnvSemState(loc2, u2)
     /\ locOther' = UNION{EnvSemStateOther(l) : l \in locOther}
     /\ msgs' = [u \in IndexNonFailed' |-> [v \in IndexNonFailed' |-> {unknown}]]
 
@@ -199,22 +206,24 @@ Fairness == /\ WF_vars(Next)
             /\ <>[](\E l \in DOMAIN crash : (TRUE \in crash[l] /\ \A k \in DOMAIN crash : l # k => TRUE \notin crash[k]))
             /\ <>decisionRound
 
-\* specification
+\* specification            
 Spec == Init /\ [][Next]_vars /\ Fairness
 
 \* safety properties
 \* k-Agreement: There is a subset W of V of cardinality K, such that all decision 
 \*              values are in W  
 Agreement == \E W \in SUBSET(V) : Cardinality(W) = K /\
-             [](loc1.halt => loc1.min \in W)
+             [](loc1.halt /\ loc2.halt => 
+                               (loc1.min \in W /\ loc2.min \in W))
 \* k-Validity: Any decision value for any process is the initial value of some process
 Validity == \A W \in SUBSET(V) : W = {min(u) : u \in IndexNonFailed} =>
-             [](loc1.halt => loc1.min \in W)
-\* liveness property             
+             [](loc1.halt /\ loc2.halt => 
+                               (loc1.min \in W /\ loc2.min \in W))
 \* k-Termination: All correct processes eventually decide
-Termination == <>(loc1.halt)
+Termination == <>(loc1.halt /\ loc2.halt)
 
 =============================================================================
 \* Modification History
-\* Last modified Fri Oct 13 18:33:47 CEST 2017 by stoilkov
-\* Created Fri Sep 29 11:33:18 CEST 2017 by stoilkov
+\* Last modified Tue May 19 16:23:43 CEST 2020 by ilina
+\* Last modified Fri Oct 13 18:34:05 CEST 2017 by stoilkov
+\* Created Thu Sep 28 17:05:26 CEST 2017 by stoilkov

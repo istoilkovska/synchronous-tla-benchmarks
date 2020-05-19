@@ -1,4 +1,4 @@
-------------------------- MODULE floodmin_abstract -------------------------
+------------------------- MODULE floodmin_k2_abstract -------------------------
 
 EXTENDS Naturals, FiniteSets, TLC
 
@@ -85,7 +85,7 @@ InitAlgorithm ==
     /\ loc1 \in InitActive \* first fixed process 
     /\ loc2 \in InitActive \* second fixed process 
     /\ loc3 \in InitActive \* third fixed process 
-    /\ locOther \in ((SUBSET(InitActive)) \ {{}}) \* set of locations witnessing the other N - 2 processes
+    /\ locOther \in ((SUBSET(InitActive)) \ {{}}) \* set of locations witnessing the other N - 3 processes
     /\ msgs = [u \in IndexNonFailed |-> [v \in IndexNonFailed |-> {unknown}]] \* two-dimensional messages array
 
 \* environment transition in the message exchage phase 
