@@ -12,7 +12,7 @@ Name  | Problem | Reference
 :-----|:--------|:---------
 [edac](https://github.com/istoilkovska/synchronous-tla-benchmarks/tree/master/edac) | early deciding consensus | [Charron-Bost, Schiper](https://www.sciencedirect.com/science/article/pii/S0196677403001652)
 [fair_cons](https://github.com/istoilkovska/synchronous-tla-benchmarks/tree/master/fair_cons) | consensus | [Raynal](https://www.morganclaypool.com/doi/abs/10.2200/S00294ED1V01Y201009DCT003), p.17
-[floodmin](https://github.com/istoilkovska/synchronous-tla-benchmarks/tree/master/floodmin) | k-set agreement, for k=2| [Lynch](http://groups.csail.mit.edu/tds/distalgs.html), p.136
+[floodmin](https://github.com/istoilkovska/synchronous-tla-benchmarks/tree/master/floodmin_k2) | k-set agreement, for k=2| [Lynch](http://groups.csail.mit.edu/tds/distalgs.html), p.136
 [floodset](https://github.com/istoilkovska/synchronous-tla-benchmarks/tree/master/floodset) | consensus | [Lynch](http://groups.csail.mit.edu/tds/distalgs.html), p.103
 [nbac](https://github.com/istoilkovska/synchronous-tla-benchmarks/tree/master/nbac) | non-blocking atomic commit | [Raynal](https://www.morganclaypool.com/doi/abs/10.2200/S00294ED1V01Y201009DCT003), p.82
 [pdif](https://github.com/istoilkovska/synchronous-tla-benchmarks/tree/master/pdif) | early stopping consensus | [Raynal](https://www.morganclaypool.com/doi/abs/10.2200/S00294ED1V01Y201009DCT003), p.38 
